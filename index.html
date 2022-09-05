@@ -25,28 +25,38 @@
             start();
 
             const status = $("#status");
-            // onreconnecting: Event fired/triggered before starting reconnect attempts.
-            connection.onreconnecting(error => {
-                status.css("background-color", "blue");
+            function setStatusDiv(backgroundColor, text) {
+                status.css("background-color", backgroundColor);
                 status.css("color", "white");
-                status.html("Establishing connection...");
-                status.fadeIn(2000, () => setTimeout(() => status.fadeOut(2000), 2000))
-            });
+                status.html(text);
+                status.fadeIn(2000, () => setTimeout(() => status.fadeOut(2000), 2000));
+            }
+
+            // onreconnecting: Event fired/triggered before starting reconnect attempts.
+            // Returns error! If you want use as error => {}
+            connection.onreconnecting(() => setStatusDiv("blue", "Establishing connection..."));
 
             // onreconnected: It is the function that is triggered when the reconnection occurs.
             connection.onreconnected(connectionId => {
-                status.css("background-color", "green");
-                status.css("color", "white");
-                status.html(`Connection established! => ConnectionId: ${connectionId}`);
-                status.fadeIn(2000, () => setTimeout(() => status.fadeOut(2000), 2000))
+                setStatusDiv("green", `Connection established! => ConnectionId: ${connectionId}`);
             });
 
             // onclose: Thrown when reconnection attempts fail.
             connection.onclose(connectionId => {
-                status.css("background-color", "red");
-                status.css("color", "white");
-                status.html(`Connection closed! => ConnectionId: ${connectionId}`);
-                status.fadeIn(2000, () => setTimeout(() => status.fadeOut(2000), 2000))
+                setStatusDiv("red", `Connection closed! => ConnectionId: ${connectionId}`);
+            });
+            
+            connection.on("userJoined", connectionId => setStatusDiv("lightgreen", `${connectionId} joined!`));
+            
+            connection.on("userLeaved", connectionId => {
+                setStatusDiv("#FFCCCB", `${connectionId} leaved!`); // Light red: #FFCCCB
+            });
+            
+            connection.on("clients", clients => {
+                $("#clients").empty();
+                $.each(clients, (index, item) => {
+                    $("#clients").append(`<li>${item}</li>`);
+                });
             });
             
             $("#btnGonder").click(() => {
@@ -55,9 +65,7 @@
                 connection.invoke("SendMessageAsync", message).catch(error => console.log(error));
             });
             
-            connection.on("receiveMessage", message => {
-                $("#messages").append(`${message}<br>`);
-            });
+            connection.on("receiveMessage", message => $("#messages").append(`${message}<br>`));
         });
     </script>
 </head>
@@ -68,5 +76,7 @@
     <button id="btnSend">Send</button>
 
     <div id="messages"></div>
+
+    <div><ul id="clients"></ul></div>
 </body>
 </html>
