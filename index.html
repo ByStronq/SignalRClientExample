@@ -6,9 +6,48 @@
     <script>
         $(document).ready(() => {
             const connection = new signalR.HubConnectionBuilder()
-                .withUrl("http://localhost:5098/myhub").build();
+                .withUrl("http://localhost:5098/myhub")
+                // Automatic Reconnect => There is a connection, but it is used in cases where it is broken
+                .withAutomaticReconnect([1000, 1000, 2000, 3000, 5000, 10000]) // Automatic reconnect times in order in ms
+                // Default 0s. - 2s. - 10s. - 30s.
+                .build();
+
+            // This function is used in cases where the connection could not be established before.
+            async function start() {
+                try {
+                    await connection.start();
+                } catch (error) {
+                    setTimeout(() => start(), 2000);
+                }
+            }
             
-            connection.start();
+            // connection.start();
+            start();
+
+            const status = $("#status");
+            // onreconnecting: Event fired/triggered before starting reconnect attempts.
+            connection.onreconnecting(error => {
+                status.css("background-color", "blue");
+                status.css("color", "white");
+                status.html("Establishing connection...");
+                status.fadeIn(2000, () => setTimeout(() => status.fadeOut(2000), 2000))
+            });
+
+            // onreconnected: It is the function that is triggered when the reconnection occurs.
+            connection.onreconnected(connectionId => {
+                status.css("background-color", "green");
+                status.css("color", "white");
+                status.html(`Connection established! => ConnectionId: ${connectionId}`);
+                status.fadeIn(2000, () => setTimeout(() => status.fadeOut(2000), 2000))
+            });
+
+            // onclose: Thrown when reconnection attempts fail.
+            connection.onclose(connectionId => {
+                status.css("background-color", "red");
+                status.css("color", "white");
+                status.html(`Connection closed! => ConnectionId: ${connectionId}`);
+                status.fadeIn(2000, () => setTimeout(() => status.fadeOut(2000), 2000))
+            });
             
             $("#btnGonder").click(() => {
                 let message = $("#txtMessage").val();
@@ -17,17 +56,17 @@
             });
             
             connection.on("receiveMessage", message => {
-                $("div").append(`${message}<br>`);
+                $("#messages").append(`${message}<br>`);
             });
         });
     </script>
 </head>
 <body>
-    <input type="text" id="txtMessage" />
-    <button id="btnGonder">Gönder</button>
+    <div id="status" style="display: none;"></div>
 
-    <div>
-        
-    </div>
+    <input type="text" id="txtMessage" />
+    <button id="btnSend">Send</button>
+
+    <div id="messages"></div>
 </body>
 </html>
