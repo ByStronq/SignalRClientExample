@@ -6,7 +6,7 @@
     <script>
         $(document).ready(() => {
             const connection = new signalR.HubConnectionBuilder()
-                .withUrl("http://localhost:5098/myhub")
+                .withUrl("http://localhost:5098/messagehub")
                 // Automatic Reconnect => There is a connection, but it is used in cases where it is broken
                 .withAutomaticReconnect([1000, 1000, 2000, 3000, 5000, 10000]) // Automatic reconnect times in order in ms
                 // Default 0s. - 2s. - 10s. - 30s.
@@ -46,37 +46,55 @@
                 setStatusDiv("red", `Connection closed! => ConnectionId: ${connectionId}`);
             });
             
-            connection.on("userJoined", connectionId => setStatusDiv("lightgreen", `${connectionId} joined!`));
-            
-            connection.on("userLeaved", connectionId => {
-                setStatusDiv("#FFCCCB", `${connectionId} leaved!`); // Light red: #FFCCCB
+            let _connectionId = "";
+            connection.on("getConnectionId", connectionId => {
+                _connectionId = connectionId;
+                $("#connectionId").html(`Connection Id: ${connectionId}`)
             });
             
-            connection.on("clients", clients => {
-                $("#clients").empty();
-                $.each(clients, (index, item) => {
-                    $("#clients").append(`<li>${item}</li>`);
-                });
-            });
-            
-            $("#btnGonder").click(() => {
-                let message = $("#txtMessage").val();
+            $("#btnSend").click(() => {
+                let message = $("#txtMessage").val(),
+                    /* connectionIds = $("#connectionIds").val().split(','), */
+                    groupName = $("input[name=group]:checked").val()//,
+                    /* groupNames = $("#groupNames").val().split(',') */;
 
-                connection.invoke("SendMessageAsync", message).catch(error => console.log(error));
+                // connection.invoke("SendMessageAsync", message).catch(error => console.log(error));
+                // connection.invoke("SendMessageAsync", message, connectionIds).catch(error => console.log(error));
+                connection.invoke("SendMessageAsync", message, groupName).catch(error => console.log(error));
+                // connection.invoke("SendMessageAsync", message, groupName, connectionIds).catch(error => console.log(error));
+                // connection.invoke("SendMessageAsync", message, groupNames).catch(error => console.log(error));
             });
+            
+            $("#btnJoinGroup").click(() => {
+                let groupName = $("input[name=group]:checked").val();
+
+                connection.invoke("addGroup", _connectionId, groupName).catch(error => console.log(error));
+            })
             
             connection.on("receiveMessage", message => $("#messages").append(`${message}<br>`));
         });
     </script>
 </head>
 <body>
+    <div id="connectionId" style="background-color: black; color: white;"></div>
     <div id="status" style="display: none;"></div>
 
-    <input type="text" id="txtMessage" />
+    <input name="group" type="radio" value="A" /> A
+    <input name="group" type="radio" value="B" /> B
+    <input name="group" type="radio" value="C" /> C
+    <button id="btnJoinGroup">Join Group</button>
+    <br>
+    
+    <input id="txtMessage" type="text" placeholder="Type a message.." /><br>
+    <input id="groupNames" type="text" placeholder="Group names (separate with commas without spaces)" /><br>
+    <textarea
+        id="connectionIds"
+        cols="30"
+        rows="10"
+        placeholder="Excluded connection ids (separate with commas without spaces)"
+    ></textarea>
     <button id="btnSend">Send</button>
 
     <div id="messages"></div>
-
-    <div><ul id="clients"></ul></div>
 </body>
 </html>

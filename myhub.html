@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="signalr.min.js"></script>
+    <script src="jquery.min.js"></script>
+    <script>
+        $(document).ready(() => {
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl("http://localhost:5098/myhub")
+                // Automatic Reconnect => There is a connection, but it is used in cases where it is broken
+                .withAutomaticReconnect([1000, 1000, 2000, 3000, 5000, 10000]) // Automatic reconnect times in order in ms
+                // Default 0s. - 2s. - 10s. - 30s.
+                .build();
+
+            // This function is used in cases where the connection could not be established before.
+            async function start() {
+                try {
+                    await connection.start();
+                } catch (error) {
+                    setTimeout(() => start(), 2000);
+                }
+            }
+            
+            // connection.start();
+            start();
+
+            const status = $("#status");
+            function setStatusDiv(backgroundColor, text) {
+                status.css("background-color", backgroundColor);
+                status.css("color", "white");
+                status.html(text);
+                status.fadeIn(2000, () => setTimeout(() => status.fadeOut(2000), 2000));
+            }
+
+            // onreconnecting: Event fired/triggered before starting reconnect attempts.
+            // Returns error! If you want use as error => {}
+            connection.onreconnecting(() => setStatusDiv("blue", "Establishing connection..."));
+
+            // onreconnected: It is the function that is triggered when the reconnection occurs.
+            connection.onreconnected(connectionId => {
+                setStatusDiv("green", `Connection established! => ConnectionId: ${connectionId}`);
+            });
+
+            // onclose: Thrown when reconnection attempts fail.
+            connection.onclose(connectionId => {
+                setStatusDiv("red", `Connection closed! => ConnectionId: ${connectionId}`);
+            });
+            
+            connection.on("userJoined", connectionId => setStatusDiv("lightgreen", `${connectionId} joined!`));
+            
+            connection.on("userLeaved", connectionId => {
+                setStatusDiv("#FFCCCB", `${connectionId} leaved!`); // Light red: #FFCCCB
+            });
+            
+            connection.on("clients", clients => {
+                $("#clients").empty();
+                $.each(clients, (index, item) => {
+                    $("#clients").append(`<li>${item}</li>`);
+                });
+            });
+            
+            $("#btnSend").click(() => {
+                let message = $("#txtMessage").val();
+
+                connection.invoke("SendMessageAsync", message).catch(error => console.log(error));
+            });
+            
+            connection.on("receiveMessage", message => $("#messages").append(`${message}<br>`));
+        });
+    </script>
+</head>
+<body>
+    <div id="status" style="display: none;"></div>
+
+    <input id="txtMessage" type="text" />
+    <button id="btnSend">Send</button>
+
+    <div id="messages"></div>
+
+    <div><ul id="clients"></ul></div>
+</body>
+</html>
