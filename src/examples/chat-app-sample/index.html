@@ -1,0 +1,62 @@
+<html>
+    <head>
+        <script src="../../scripts/signalr.min.js"></script>
+        <script src="../../scripts/jquery.min.js"></script>
+        <script src="../../scripts/bootstrap.min.js"></script>
+
+        <link rel="stylesheet" href="../../styles/bootstrap.min.css">
+        <link rel="stylesheet" href="../../styles/chat-app-sample.css">
+
+        <script src="../../scripts/chat-app-sample.js"></script>
+    </head>
+    <body>
+        <div class="row">
+            <div class="col-md-1"></div>
+            <div class="col-md-10">
+                <div class="row">
+                    <!-- Left Menu -->
+                    <div class="col-md-3">
+                        <!-- Room -->
+                        <input id="txtRoomName" class="form-control form-control-lg disabledItem" type="text" placeholder="Room name">
+                        <button id="btnCreateRoom" type="button" class="btn btn-info rightButton disabledItem">Create Room</button>
+                        <select id="groups" size="5" style="width: 100%;" class="form-select disabledItem" multiple>
+                            <option class="rooms">Rooms</option>
+                        </select>
+                        <button id="btnEnterSelectedRooms" type="button" class="btn btn-primary rightButton disabledItem">Enter Selected Rooms</button>
+                        <!-- Room -->
+                        <br><br><br>
+                        <!-- Clients -->
+                        <div class="list-group">
+                            <a class="list-group-item list-group-item-action users active">All</a>
+                            <div id="clients"></div>
+                        </div>
+                        <!-- Clients -->
+                    </div>
+                    <div class="col-md-6">
+                        <div id="status" class="alert" style="display: none;"></div>
+                        <!-- Messaging -->
+                        <textarea id="txtMessage" class="form-control" style="margin-top: 5px;" placeholder="Enter the message to be forwarded here." rows="3"></textarea>
+                        <button id="btnSend" type="button" class="btn btn-light rightButton">Send</button>
+                        <button id="btnSendToGroup" type="button" class="btn btn-light rightButton">Send To Group</button>
+                        <br><br><br>
+                        <div id="messages" class="list-group">
+                            <a class="list-group-item list-group-item-action message" aria-current="true">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1"></h5>
+                                    <h5 class="mb-2"></h5>
+                                </div>
+                                <p class="mb-1"></p>
+                            </a>
+                        </div>
+                        <!-- Messaging -->
+                    </div>
+                    <div class="col-md-3">
+                        <input id="txtNickname" type="text" class="form-control form-control-lg" placeholder="Your name/Nick">
+                        <button id="btnLogin" type="button" class="btn btn-success leftButton">Login</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-1"></div>
+        </div>
+    </body>
+</html>
